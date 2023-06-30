@@ -5,3 +5,4 @@ OpenAI
 python-dotenv
 tensorflow==2.12.*
 transformers
+vllm

@@ -7,17 +7,20 @@ from langchain.memory import ConversationSummaryMemory
 from dotenv import load_dotenv
 from transformers import pipeline
 from transformers import AutoTokenizer, AutoModel
+# from vllm import LLM, SamplingParams
 from labels import candidate_labels, candidate_sents
 
 load_dotenv()
 
 
 def get_response(inquiry):
-
+    # text-davinci-003
+    # gpt-3.5-turbo
+    # togethercomputer/RedPajama-INCITE-Base-3B-v1
     if st.session_state['conversation'] is None:
         llm = OpenAI(
             temperature=0,
-            model_name='text-davinci-003'  # we can also use 'gpt-3.5-turbo'
+            model_name='text-davinci-003'
         )
 
         st.session_state['conversation'] = ConversationChain(
@@ -25,7 +28,6 @@ def get_response(inquiry):
             verbose=True
         )
 
-    # response = openai.Completion.create(model="text-davinci-003", prompt=prompt, max_tokens=100)
     prompt = f"""
                     You are a helpful AI assistant that helps to process customer inquiries. For each inquiry, provide a response.
 
@@ -43,14 +45,25 @@ def get_response(inquiry):
                     Tone: '3'.
     """
 
+
     # facebook/bart-large-mnli
     # alexandrainst/scandi-nli-large
+    # facebook/opt-iml-max-30b  <-- memory times out, model too large
     classifier = pipeline("zero-shot-classification",
                           model="facebook/bart-large-mnli")
+    ###
+    # sampling_params = SamplingParams(temperature=0.8, top_p=0.95)
+    # outputs = classifier.generate(prompt, sampling_params)
+    # # Print the outputs.
+    # for output in outputs:
+    #     prompt = output.prompt
+    #     generated_text = output.outputs[0].text
+    #     print(f"Prompt: {prompt!r}, Generated text: {generated_text!r}")
+    ###
 
     results = classifier(inquiry, candidate_labels, multi_label=True)
     count = 0
-    threshold = 0.90
+    threshold = 0.80
 
     #     print(text)
     label_results = []
